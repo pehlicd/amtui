@@ -23,6 +23,14 @@ AMTUI is a terminal-based user interface (TUI) application that allows you to in
 
 ## Installation
 
+### Using Homebrew
+You can install AMTUI using the [Homebrew](https://brew.sh/) package manager:
+
+```bash
+brew tap pehlicd/tap
+brew install amtui
+```
+
 ### Using go install
 You can install AMTUI using the `go install` command:
 
