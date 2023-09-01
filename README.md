@@ -1,5 +1,7 @@
 # AMTUI - Alertmanager Terminal User Interface
 
+![Go version](https://img.shields.io/github/go-mod/go-version/pehlicd/amtui) ![Release](https://img.shields.io/github/v/release/pehlicd/amtui) [![Go Report Card](https://goreportcard.com/badge/github.com/pehlicd/amtui)](https://goreportcard.com/report/github.com/pehlicd/amtui) ![License](https://img.shields.io/github/license/pehlicd/amtui)
+
 ```
 
  █████╗ ███╗   ███╗████████╗██╗   ██╗██╗
