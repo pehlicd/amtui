@@ -15,6 +15,10 @@
 
 AMTUI is a terminal-based user interface (TUI) application that allows you to interact with Prometheus Alertmanager using your terminal. It provides a convenient way to monitor alerts, view silences, and check the status of Alertmanager instances right from your command line.
 
+<p align="center">
+    <img src="./static/demo.gif" alt="AMTUI Demo"/>
+</p>
+
 ## Features
 
 - View active alerts with details such as severity, alert name, and description.
