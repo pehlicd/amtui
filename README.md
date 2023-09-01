@@ -21,6 +21,17 @@ AMTUI is a terminal-based user interface (TUI) application that allows you to in
 
 ## Installation
 
+### Using go install
+You can install AMTUI using the `go install` command:
+
+```bash
+go install github.com/pehlicd/amtui@latest
+```
+
+### From Releases
+You can download the latest release of AMTUI from the [GitHub releases page](https://github.com/pehlicd/amtui/releases).
+
+### From Source
 To use AMTUI, you'll need to have Go installed on your system. Then, you can install AMTUI using the following steps:
 
 1. Clone the repository:
