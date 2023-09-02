@@ -1,9 +1,8 @@
-name: goreleaser
+name: relaese
 
 on:
   push:
-    tags:
-      - '*'
+    tags: ['v*.*.*']
 
 permissions:
   contents: write
