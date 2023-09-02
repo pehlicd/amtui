@@ -106,7 +106,8 @@ AMTUI uses the following dependencies:
 - `github.com/gdamore/tcell/v2`: Terminal handling and screen painting.
 - `github.com/prometheus/alertmanager/api/v2/client`: Alertmanager API client.
 - `github.com/rivo/tview`: Terminal-based interactive viewer.
-- `gopkg.in/yaml.v3`: YAML support for the configuration file.
+- `github.com/spf13/pflag`: Flag parsing.
+- `github.com/spf13/viper`: Configuration management.
 
 ## Contributing
 

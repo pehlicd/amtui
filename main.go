@@ -14,8 +14,8 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -26,13 +26,14 @@ import (
 	"github.com/prometheus/alertmanager/api/v2/client/alert"
 	"github.com/prometheus/alertmanager/api/v2/client/silence"
 	"github.com/rivo/tview"
-	"gopkg.in/yaml.v3"
+	flag "github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
 // API URLs
 const (
 	BasePath        = "/api/v2"
-	TitleFooterView = "AMTUI - Alertmanager TUI Client\ngithub.com/pehlicd/"
+	TitleFooterView = "AMTUI - Alertmanager TUI Client\ngithub.com/pehlicd/amtui"
 )
 
 type TUI struct {
@@ -51,47 +52,65 @@ type Config struct {
 	Scheme string `yaml:"scheme"`
 }
 
-var (
-	host   = flag.String("host", "", "Alertmanager host")
-	port   = flag.String("port", "", "Alertmanager port")
-	scheme = flag.String("scheme", "", "Alertmanager scheme")
-)
+func initConfig() Config {
+	// Initialize Viper
+	viper.SetConfigName(".amtui")          // Configuration file name without extension
+	viper.SetConfigType("yaml")            // Configuration file type
+	viper.AddConfigPath(os.Getenv("HOME")) // Search for the configuration file in the $HOME directory
 
-func init() {
+	// Set default values for your configuration struct
+	viper.SetDefault("host", "localhost")
+	viper.SetDefault("port", "9093")
+	viper.SetDefault("scheme", "http")
+
+	var config Config
+
+	// Allow command-line flags to override the configuration
+	flag.StringVar(&config.Host, "host", config.Host, "Alertmanager host")
+	flag.StringVar(&config.Port, "port", config.Port, "Alertmanager port")
+	flag.StringVar(&config.Scheme, "scheme", config.Scheme, "Alertmanager scheme http or https is supported")
 	flag.Parse()
-}
 
-func (tui *TUI) readConfig() (Config, error) {
-	home := os.Getenv("HOME")
-	configFile := home + "/.amtui.yaml"
-	tui.Config = Config{}
-	f, err := os.Open(configFile)
-	if err != nil {
-		return tui.Config, fmt.Errorf("error reading config file: %s", err)
-	}
-	defer f.Close()
-	decoder := yaml.NewDecoder(f)
-	err = decoder.Decode(&tui.Config)
-	if err != nil {
-		return tui.Config, fmt.Errorf("error decoding config file: %s", err)
-	}
-	return tui.Config, nil
-}
+	// Bind environment variables (optional)
+	viper.AutomaticEnv()
+	viper.SetEnvPrefix("AMTUI")
 
-func (tui *TUI) writeConfig() error {
-	home := os.Getenv("HOME")
-	configFile := home + "/.amtui.yaml"
-	f, err := os.Create(configFile)
-	if err != nil {
-		return fmt.Errorf("error creating config file: %s", err)
+	//if flags are set, overwrite config file
+	if config.Host != "" && config.Port != "" && config.Scheme != "" {
+		viper.Set("host", config.Host)
+		viper.Set("port", config.Port)
+		viper.Set("scheme", config.Scheme)
+		err := viper.WriteConfig()
+		if err != nil {
+			log.Fatalf("Error writing config file: %v", err)
+		}
 	}
-	defer f.Close()
-	encoder := yaml.NewEncoder(f)
-	err = encoder.Encode(&tui.Config)
-	if err != nil {
-		return fmt.Errorf("error encoding config file: %s", err)
+
+	// Read the configuration file
+	if err := viper.ReadInConfig(); err != nil {
+		// Handle errors when the configuration file is not found or is invalid
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			log.Println("Config file not found, using defaults.")
+			// Write the default configuration to a new file
+			if err := viper.SafeWriteConfig(); err != nil {
+				log.Fatalf("Error creating config file: %v", err)
+			}
+		} else {
+			log.Fatalf("Error reading config file: %v", err)
+		}
 	}
-	return nil
+
+	// Merge flags into the configuration
+	if err := viper.BindPFlags(flag.CommandLine); err != nil {
+		log.Fatalf("Error binding flags: %v", err)
+	}
+
+	// Unmarshal the configuration into your Config struct
+	if err := viper.Unmarshal(&config); err != nil {
+		log.Fatalf("Error unmarshaling config: %v", err)
+	}
+
+	return config
 }
 
 func tuiInit() *TUI {
@@ -114,32 +133,7 @@ func tuiInit() *TUI {
 		AddItem(tui.Preview, 1, 1, 1, 1, 0, 0, false).
 		AddItem(tui.FooterText, 2, 0, 1, 2, 0, 0, false)
 	// check if config file exists
-	if _, err := os.Stat(os.Getenv("HOME") + "/.amtui.yaml"); err == nil {
-		// if exists, read config file
-		config, err := tui.readConfig()
-		if err != nil {
-			fmt.Printf("Error reading config file: %s", err)
-			os.Exit(1)
-		}
-		tui.Config = config
-	} else {
-		// if not exists, create config file
-		if *host == "" || *port == "" || *scheme == "" {
-			fmt.Println("Please provide host, port and scheme values")
-			os.Exit(1)
-		}
-		err := tui.writeConfig()
-		if err != nil {
-			fmt.Printf("Error writing config file: %s", err)
-			os.Exit(1)
-		}
-		config, err := tui.readConfig()
-		if err != nil {
-			fmt.Printf("Error reading config file: %s", err)
-			os.Exit(1)
-		}
-		tui.Config = config
-	}
+	tui.Config = initConfig()
 	return &tui
 }
 
