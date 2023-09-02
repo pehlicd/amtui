@@ -116,7 +116,7 @@ func initConfig() Config {
 func tuiInit() *TUI {
 	tui := TUI{App: tview.NewApplication()}
 	tui.SidebarList = tview.NewList().ShowSecondaryText(false)
-	tui.PreviewList = tview.NewList().ShowSecondaryText(false).SetSelectedBackgroundColor(tcell.ColorBrown)
+	tui.PreviewList = tview.NewList().ShowSecondaryText(false).SetSelectedBackgroundColor(tcell.ColorDarkSlateGray)
 	tui.Preview = tview.NewTextView().SetDynamicColors(true).SetRegions(true).SetScrollable(true)
 	tui.FooterText = tview.NewTextView().SetTextAlign(tview.AlignCenter).SetText(TitleFooterView).SetTextColor(tcell.ColorGray)
 	tui.PreviewList.SetTitle("").SetTitleAlign(tview.AlignCenter).SetBorder(true)
@@ -132,7 +132,7 @@ func tuiInit() *TUI {
 		AddItem(tui.PreviewList, 0, 1, 1, 1, 0, 0, false).
 		AddItem(tui.Preview, 1, 1, 1, 1, 0, 0, false).
 		AddItem(tui.FooterText, 2, 0, 1, 2, 0, 0, false)
-	// check if config file exists
+	// configuration management
 	tui.Config = initConfig()
 	return &tui
 }
@@ -211,7 +211,7 @@ func (tui *TUI) getAlerts() {
 	tui.PreviewList.SetTitle(" Alerts ").SetTitleAlign(tview.AlignCenter).SetBorder(true)
 	var mainText string
 	var alertName string
-	tui.PreviewList.AddItem("[red]Total active alerts 🔥: [white]"+strconv.Itoa(len(alerts.Payload)), "", 0, nil)
+	tui.PreviewList.AddItem("Total active alerts 🔥: "+strconv.Itoa(len(alerts.Payload)), "", 0, nil)
 	for _, alert := range alerts.Payload {
 		alertByte, err := json.MarshalIndent(alert, "", "    ")
 		if err != nil {
@@ -225,6 +225,8 @@ func (tui *TUI) getAlerts() {
 				alertName = "[yellow]" + alert.Labels["alertname"]
 			case "info":
 				alertName = "[blue]" + alert.Labels["alertname"]
+			default:
+				alertName = alert.Labels["alertname"]
 			}
 		} else {
 			alertName = alert.Labels["alertname"]
@@ -269,7 +271,7 @@ func (tui *TUI) silences() {
 			continue
 		}
 		mainText := silence.EndsAt.String() + " - " + *silence.CreatedBy + " - " + *silence.Comment
-		tui.PreviewList.AddItem(mainText, fmt.Sprintf("[white]%s", string(silenceByte)), 0, nil)
+		tui.PreviewList.AddItem(mainText, fmt.Sprintf("[green]%s", string(silenceByte)), 0, nil)
 	}
 
 	tui.PreviewList.SetSelectedFunc(func(i int, s string, s2 string, r rune) {
@@ -297,7 +299,7 @@ func (tui *TUI) status() {
 	}
 	tui.PreviewList.SetTitle("Status").SetTitleAlign(tview.AlignCenter)
 
-	tui.Preview.SetText(fmt.Sprintf("[white]%s", string(statusByte))).SetTextAlign(tview.AlignLeft)
+	tui.Preview.SetText(fmt.Sprintf("[green]%s", string(statusByte))).SetTextAlign(tview.AlignLeft)
 }
 
 // send http get request to alertmanager api to be ensure if it is up or not
