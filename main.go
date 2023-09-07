@@ -16,21 +16,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
+	"net"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/go-openapi/swag"
 	am "github.com/prometheus/alertmanager/api/v2/client"
 	"github.com/prometheus/alertmanager/api/v2/client/alert"
+	"github.com/prometheus/alertmanager/api/v2/client/general"
 	"github.com/prometheus/alertmanager/api/v2/client/silence"
 	"github.com/rivo/tview"
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
-// API URLs
 const (
 	BasePath        = "/api/v2"
 	TitleFooterView = "AMTUI - Alertmanager TUI Client\ngithub.com/pehlicd/amtui"
@@ -115,16 +116,19 @@ func initConfig() Config {
 
 func tuiInit() *TUI {
 	tui := TUI{App: tview.NewApplication()}
+
 	tui.SidebarList = tview.NewList().ShowSecondaryText(false)
 	tui.PreviewList = tview.NewList().ShowSecondaryText(false).SetSelectedBackgroundColor(tcell.ColorDarkSlateGray)
 	tui.Preview = tview.NewTextView().SetDynamicColors(true).SetRegions(true).SetScrollable(true)
 	tui.FooterText = tview.NewTextView().SetTextAlign(tview.AlignCenter).SetText(TitleFooterView).SetTextColor(tcell.ColorGray)
+
 	tui.PreviewList.SetTitle("").SetTitleAlign(tview.AlignCenter).SetBorder(true)
 	tui.SidebarList.SetTitle(" Navigation ").SetTitleAlign(tview.AlignCenter).SetBorder(true)
 	tui.SidebarList.AddItem("Alerts", "", '1', tui.getAlerts)
-	tui.SidebarList.AddItem("Silences", "", '2', tui.silences)
-	tui.SidebarList.AddItem("Status", "", '3', tui.status)
+	tui.SidebarList.AddItem("Silences", "", '2', tui.getSilences)
+	tui.SidebarList.AddItem("Status", "", '3', tui.getStatus)
 	tui.Preview.SetTitle("").SetTitleAlign(tview.AlignCenter).SetBorder(true)
+
 	tui.Grid = tview.NewGrid().
 		SetRows(0, 0, 3).
 		SetColumns(20, 0).
@@ -132,13 +136,9 @@ func tuiInit() *TUI {
 		AddItem(tui.PreviewList, 0, 1, 1, 1, 0, 0, false).
 		AddItem(tui.Preview, 1, 1, 1, 1, 0, 0, false).
 		AddItem(tui.FooterText, 2, 0, 1, 2, 0, 0, false)
+
 	// configuration management
 	tui.Config = initConfig()
-	return &tui
-}
-
-func main() {
-	tui := tuiInit()
 
 	// listen for keyboard events and if q pressed, exit if l pressed in SidebarList focus on PreviewList if h is pressed in PreviewList focus on SidebarList
 	tui.App.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -172,10 +172,14 @@ func main() {
 		}
 		return event
 	})
+	return &tui
+}
+
+func main() {
+	tui := tuiInit()
 
 	if err := tui.Start(); err != nil {
-		fmt.Printf("Error running app: %s", err)
-		os.Exit(1)
+		log.Fatalf("Error running app: %s", err)
 	}
 }
 
@@ -193,29 +197,35 @@ func (tui *TUI) amClient() *am.AlertmanagerAPI {
 func (tui *TUI) getAlerts() {
 	err := tui.checkConn()
 	if err != nil {
-		tui.Preview.SetText(fmt.Sprintf("%s", err))
+		tui.Errorf("%s", err)
 		return
 	}
 
-	alerts, err := tui.amClient().Alert.GetAlerts(&alert.GetAlertsParams{Silenced: swag.Bool(false), Active: swag.Bool(true), Context: context.Background()})
+	params := alert.NewGetAlertsParamsWithTimeout(5 * time.Second).WithContext(context.Background()).WithActive(swag.Bool(true)).WithSilenced(swag.Bool(false))
+	alerts, err := tui.amClient().Alert.GetAlerts(params)
 	if err != nil {
-		tui.Preview.SetText(fmt.Sprintf("Error fetching alerts data: %s", err))
+		tui.Errorf("Error fetching alerts data: %s", err)
 		return
 	}
-	tui.PreviewList.Clear()
-	tui.Preview.Clear()
+
+	tui.ClearPreviews()
+	tui.PreviewList.SetTitle(" Alerts ").SetTitleAlign(tview.AlignCenter).SetBorder(true)
+
 	if len(alerts.Payload) == 0 {
 		tui.Preview.SetText("[green]No alerts 🎉").SetTextAlign(tview.AlignCenter)
 		return
 	}
-	tui.PreviewList.SetTitle(" Alerts ").SetTitleAlign(tview.AlignCenter).SetBorder(true)
+
+	tui.PreviewList.AddItem("Total active alerts 🔥: "+strconv.Itoa(len(alerts.Payload)), "", 0, nil)
+
 	var mainText string
 	var alertName string
-	tui.PreviewList.AddItem("Total active alerts 🔥: "+strconv.Itoa(len(alerts.Payload)), "", 0, nil)
+
 	for _, alert := range alerts.Payload {
 		alertByte, err := json.MarshalIndent(alert, "", "    ")
 		if err != nil {
-			fmt.Printf("Error marshaling alert: %s", err)
+			log.Printf("Error marshaling alert: %s", err)
+			continue
 		}
 		if alert.Labels["severity"] != "" {
 			switch alert.Labels["severity"] {
@@ -238,6 +248,7 @@ func (tui *TUI) getAlerts() {
 		}
 		tui.PreviewList.AddItem(mainText, fmt.Sprintf("[green]%s", string(alertByte)), 0, nil)
 	}
+
 	tui.PreviewList.SetSelectedFunc(func(i int, s string, s2 string, r rune) {
 		tui.Preview.Clear()
 		tui.Preview.SetText(s2).SetTextAlign(tview.AlignLeft)
@@ -245,29 +256,34 @@ func (tui *TUI) getAlerts() {
 }
 
 // fetch silences data from alertmanager api
-func (tui *TUI) silences() {
+func (tui *TUI) getSilences() {
 	err := tui.checkConn()
 	if err != nil {
-		tui.Preview.SetText(fmt.Sprintf("%s", err))
+		tui.Errorf("%s", err)
 		return
 	}
-	silences, err := tui.amClient().Silence.GetSilences(&silence.GetSilencesParams{Context: context.Background()})
+
+	params := silence.NewGetSilencesParams().WithTimeout(5 * time.Second).WithContext(context.Background())
+	silences, err := tui.amClient().Silence.GetSilences(params)
 	if err != nil {
-		tui.Preview.SetText(fmt.Sprintf("Error fetching silences data: %s", err))
+		tui.Errorf("Error fetching silences data: %s", err)
 		return
 	}
-	tui.Preview.Clear()
-	tui.PreviewList.Clear()
+
+	tui.ClearPreviews()
+
 	if len(silences.Payload) == 0 {
 		tui.Preview.SetText("No silenced alerts 🔔").SetTextAlign(tview.AlignCenter)
 		return
 	}
+
 	tui.PreviewList.SetTitle(" Silences ").SetTitleAlign(tview.AlignCenter)
 	tui.PreviewList.AddItem("Total silences 🔕: "+strconv.Itoa(len(silences.Payload)), "", 0, nil)
+
 	for _, silence := range silences.Payload {
 		silenceByte, err := json.MarshalIndent(silence, "", "    ")
 		if err != nil {
-			fmt.Printf("Error marshaling silence: %s", err)
+			log.Printf("Error marshaling silence: %s", err)
 			continue
 		}
 		mainText := silence.EndsAt.String() + " - " + *silence.CreatedBy + " - " + *silence.Comment
@@ -281,38 +297,48 @@ func (tui *TUI) silences() {
 }
 
 // fetch status data from alertmanager api
-func (tui *TUI) status() {
+func (tui *TUI) getStatus() {
 	err := tui.checkConn()
 	if err != nil {
-		tui.Preview.SetText(fmt.Sprintf("%s", err))
+		tui.Errorf("%s", err)
 		return
 	}
-	status, err := tui.amClient().General.GetStatus(nil)
+
+	params := general.NewGetStatusParams().WithTimeout(5 * time.Second).WithContext(context.Background())
+	status, err := tui.amClient().General.GetStatus(params)
 	if err != nil {
-		tui.Preview.SetText(fmt.Sprintf("Error fetching status data: %s", err))
+		tui.Errorf("Error fetching status data: %s", err)
 	}
-	tui.Preview.Clear()
-	tui.PreviewList.Clear()
+
+	tui.ClearPreviews()
+
 	statusByte, err := json.MarshalIndent(status.Payload, "", "    ")
 	if err != nil {
-		fmt.Printf("Error marshaling status: %s", err)
+		tui.Errorf("Error marshaling status: %s", err)
 	}
-	tui.PreviewList.SetTitle("Status").SetTitleAlign(tview.AlignCenter)
 
+	tui.PreviewList.SetTitle(" Status ").SetTitleAlign(tview.AlignCenter)
 	tui.Preview.SetText(fmt.Sprintf("[green]%s", string(statusByte))).SetTextAlign(tview.AlignLeft)
 }
 
-// send http get request to alertmanager api to be ensure if it is up or not
+// dial tcp connection to alertmanager to be ensure if alertmanager server is up or not
 func (tui *TUI) checkConn() error {
-	resp, err := http.Get(tui.Config.Scheme + "://" + tui.Config.Host + ":" + tui.Config.Port + BasePath + "/status")
+	conn, err := net.DialTimeout("tcp", tui.Config.Host+":"+tui.Config.Port, 5*time.Second)
 	if err != nil {
 		tui.Preview.Clear()
-		return fmt.Errorf("error connecting to alertmanager api: %s", err)
+		return fmt.Errorf("error connecting to alertmanager host: %s", err)
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		tui.Preview.Clear()
-		return fmt.Errorf("error connecting to alertmanager api: %s", resp.Status)
-	}
+	defer conn.Close()
 	return nil
+}
+
+// Create a function to print errors
+func (tui *TUI) Errorf(format string, args ...interface{}) {
+	tui.ClearPreviews()
+	tui.Preview.SetText(fmt.Sprintf("[red]"+format, args...)).SetTextAlign(tview.AlignLeft)
+}
+
+func (tui *TUI) ClearPreviews() {
+	tui.PreviewList.Clear()
+	tui.Preview.Clear()
 }
