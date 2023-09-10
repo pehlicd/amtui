@@ -59,9 +59,7 @@ func initConfig() Config {
 	viper.SetConfigType("yaml")            // Configuration file type
 	viper.AddConfigPath(os.Getenv("HOME")) // Search for the configuration file in the $HOME directory
 
-	if *insecure {
-		scheme = "http"
-	} else {
+	if !*insecure {
 		scheme = "https"
 	}
 
