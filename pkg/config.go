@@ -24,8 +24,6 @@ Options:
 
 var (
 	versionString string
-	date          string
-	commit        string
 	fl            = flag.NewFlagSet("amtui", flag.ExitOnError)
 	host          = fl.String("host", "localhost", "Alertmanager host")
 	port          = fl.StringP("port", "p", "9093", "Alertmanager port")
@@ -79,7 +77,7 @@ func initConfig() Config {
 	}
 
 	if *version {
-		fmt.Printf("amtui version: v%s\nReleased at: %s\nCommit: %s\n", versionString, date, commit)
+		fmt.Printf("amtui version: v%s\n", versionString)
 		os.Exit(0)
 	}
 
