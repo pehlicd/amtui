@@ -20,17 +20,19 @@ Options:
   -v, --version         Show version
   -h, --help            Help
 `
-	versionString
 )
 
 var (
-	fl       = flag.NewFlagSet("amtui", flag.ExitOnError)
-	host     = fl.String("host", "localhost", "Alertmanager host")
-	port     = fl.StringP("port", "p", "9093", "Alertmanager port")
-	insecure = fl.BoolP("insecure", "i", true, "For insecurely connecting to Alertmanager")
-	help     = fl.BoolP("help", "h", false, "Show help")
-	version  = fl.BoolP("version", "v", false, "Show version")
-	scheme   = "http"
+	versionString string
+	date          string
+	commit        string
+	fl            = flag.NewFlagSet("amtui", flag.ExitOnError)
+	host          = fl.String("host", "localhost", "Alertmanager host")
+	port          = fl.StringP("port", "p", "9093", "Alertmanager port")
+	insecure      = fl.BoolP("insecure", "i", true, "For insecurely connecting to Alertmanager")
+	help          = fl.BoolP("help", "h", false, "Show help")
+	version       = fl.BoolP("version", "v", false, "Show version")
+	scheme        = "http"
 )
 
 func printHelp(w io.Writer) {
@@ -77,7 +79,7 @@ func initConfig() Config {
 	}
 
 	if *version {
-		fmt.Printf("amtui version: %s\n", versionString)
+		fmt.Printf("amtui version: v%s\nReleased at: %s\nCommit: %s\n", versionString, date, commit)
 		os.Exit(0)
 	}
 

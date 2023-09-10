@@ -7,8 +7,7 @@ builds:
   binary: amtui
   env:
   - CGO_ENABLED=0
-  ldflags:
-  - -s -w -X pkg.versionString={{ .Tag }
+  ldflags: -s -w -X pkg.versionString={{.Version}} -X pkg.commit={{.Commit}} -X pkg.date={{.Date}}
   goos:
   - linux
   - darwin

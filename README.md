@@ -96,7 +96,7 @@ AMTUI uses a configuration file to connect to your Alertmanager instance. By def
 You can also specify connection details using command-line flags:
 
 ```bash
-amtui --host 127.0.0.1 --port 9093 --scheme http
+amtui --host 127.0.0.1 --port 9093 --insecure
 ```
 
 ## Dependencies
