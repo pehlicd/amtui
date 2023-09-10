@@ -7,7 +7,7 @@ builds:
   binary: amtui
   env:
   - CGO_ENABLED=0
-  ldflags: -s -w -X pkg.versionString={{.Tag}}
+  ldflags: -s -w -X github.com/pehlicd/amtui/pkg.versionString={{ .Tag }} -X github.com/pehlicd/amtui/pkg.buildDate={{ .Date }} -X github.com/pehlicd/amtui/pkg.buildCommit={{ .Commit }}
   goos:
   - linux
   - darwin
