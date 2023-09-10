@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"fmt"
+	"io"
 	"log"
 	"os"
 
@@ -8,30 +10,76 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	helpMessage = `Usage: amtui [options]
+
+Options:
+  --host                Alertmanager host
+  -p, --port            Alertmanager port
+  -i, --insecure        For insecurely connecting to Alertmanager
+  -v, --version         Show version
+  -h, --help            Help
+`
+	versionString
+)
+
+var (
+	fl       = flag.NewFlagSet("amtui", flag.ExitOnError)
+	host     = fl.String("host", "localhost", "Alertmanager host")
+	port     = fl.StringP("port", "p", "9093", "Alertmanager port")
+	insecure = fl.BoolP("insecure", "i", true, "For insecurely connecting to Alertmanager")
+	help     = fl.BoolP("help", "h", false, "Show help")
+	version  = fl.BoolP("version", "v", false, "Show version")
+	scheme   = "http"
+)
+
+func printHelp(w io.Writer) {
+	_, err := fmt.Fprint(w,
+		helpMessage+"\n")
+	if err != nil {
+		log.Fatalf("Error writing help to stdout: %v", err)
+	}
+	os.Exit(0)
+}
+
 type Config struct {
-	Host   string `yaml:"host"`
-	Port   string `yaml:"port"`
-	Scheme string `yaml:"scheme"`
+	Host     string `yaml:"host"`
+	Port     string `yaml:"port"`
+	Insecure bool   `yaml:"insecure"`
+	Scheme   string `yaml:"scheme"`
 }
 
 func initConfig() Config {
+	if err := fl.Parse(os.Args[1:]); err != nil {
+		log.Fatalf("Error parsing flags: %v", err)
+	}
+
 	// Initialize Viper
 	viper.SetConfigName(".amtui")          // Configuration file name without extension
 	viper.SetConfigType("yaml")            // Configuration file type
 	viper.AddConfigPath(os.Getenv("HOME")) // Search for the configuration file in the $HOME directory
 
-	// Set default values for your configuration struct
-	viper.SetDefault("host", "localhost")
-	viper.SetDefault("port", "9093")
-	viper.SetDefault("scheme", "http")
+	if *insecure {
+		scheme = "http"
+	} else {
+		scheme = "https"
+	}
 
-	var config Config
+	config := Config{
+		Host:     *host,
+		Port:     *port,
+		Insecure: *insecure,
+		Scheme:   scheme,
+	}
 
-	// Allow command-line flags to override the configuration
-	flag.StringVar(&config.Host, "host", config.Host, "Alertmanager host")
-	flag.StringVar(&config.Port, "port", config.Port, "Alertmanager port")
-	flag.StringVar(&config.Scheme, "scheme", config.Scheme, "Alertmanager scheme http or https is supported")
-	flag.Parse()
+	if *help {
+		printHelp(os.Stderr)
+	}
+
+	if *version {
+		fmt.Printf("amtui version: %s\n", versionString)
+		os.Exit(0)
+	}
 
 	// Bind environment variables (optional)
 	viper.AutomaticEnv()

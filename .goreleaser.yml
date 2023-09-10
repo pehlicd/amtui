@@ -7,6 +7,8 @@ builds:
   binary: amtui
   env:
   - CGO_ENABLED=0
+  ldflags:
+  - -s -w -X pkg.versionString={{ .Tag }
   goos:
   - linux
   - darwin
