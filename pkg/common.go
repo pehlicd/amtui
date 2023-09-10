@@ -28,4 +28,5 @@ func (tui *TUI) Errorf(format string, args ...interface{}) {
 func (tui *TUI) ClearPreviews() {
 	tui.PreviewList.Clear()
 	tui.Preview.Clear()
+	tui.Filter.SetText("")
 }
