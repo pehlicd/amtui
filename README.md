@@ -23,6 +23,7 @@ AMTUI is a terminal-based user interface (TUI) application that allows you to in
 
 - View active alerts with details such as severity, alert name, and description.
 - Browse and review existing silences in Alertmanager.
+- Filter alerts and silences using matchers.
 - Check the general status of your Alertmanager instance.
 
 ## Installation
@@ -87,6 +88,7 @@ Once you've launched AMTUI, you can navigate through different sections using th
 - `h`: Focus on the sidebar list.
 - `j`: Move focus to the preview.
 - `k`: Move focus to the preview list.
+- `CTRL + F`: Focus on the filter input.
 - `ESC`: Return focus to the sidebar list.
 
 ## Configuration
