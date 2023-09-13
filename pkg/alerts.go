@@ -83,7 +83,7 @@ func (tui *TUI) getFilteredAlerts(filter []string) {
 		return
 	}
 
-	params := alert.NewGetAlertsParamsWithTimeout(10 * time.Second).WithContext(context.Background()).WithFilter(filter).WithActive(swag.Bool(true)).WithSilenced(swag.Bool(false))
+	params := alert.NewGetAlertsParamsWithTimeout(5 * time.Second).WithContext(context.Background()).WithFilter(filter).WithActive(swag.Bool(true)).WithSilenced(swag.Bool(false))
 	alerts, err := tui.amClient().Alert.GetAlerts(params)
 	if err != nil {
 		tui.Errorf("Error fetching alerts data: %s", err)

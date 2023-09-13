@@ -8,7 +8,6 @@ import (
 )
 
 const (
-	BasePath        = "/api/v2"
 	TitleFooterView = "AMTUI - Alertmanager TUI Client\ngithub.com/pehlicd/amtui"
 )
 
@@ -30,21 +29,31 @@ func InitTUI() *TUI {
 	tui.PreviewList = tview.NewList().ShowSecondaryText(false).SetSelectedBackgroundColor(tcell.ColorIndigo).SetSelectedTextColor(tcell.ColorWhite)
 	tui.Preview = tview.NewTextView().SetDynamicColors(true).SetRegions(true).SetScrollable(true)
 	tui.Filter = tview.NewInputField().SetLabel("Filter: ").SetFieldBackgroundColor(tcell.ColorIndigo).SetLabelColor(tcell.ColorWhite).SetFieldTextColor(tcell.ColorWhite).SetDoneFunc(func(key tcell.Key) {
-		// check if Alerts option is selected from SidebarList or not
-		if tui.SidebarList.GetCurrentItem() != 0 {
+		// check if Alerts or Silences option is selected from SidebarList or not
+		if tui.SidebarList.GetCurrentItem() == 2 {
 			tui.ClearPreviews()
-			tui.Preview.SetText("[red]Please select Alerts option from Navigation")
+			tui.Preview.SetText("[red]Please select Alerts or Silences option from Navigation").SetTextAlign(tview.AlignCenter)
 			return
 		}
+
 		// if search field is empty, return all alerts
-		if tui.Filter.GetText() == "" {
+		if tui.Filter.GetText() == "" && tui.SidebarList.GetCurrentItem() == 0 {
 			tui.getAlerts()
 			return
+		} else if tui.Filter.GetText() != "" && tui.SidebarList.GetCurrentItem() == 0 {
+			// if search field is not empty, return alerts based on search field
+			tui.PreviewList.Clear()
+			filter := strings.Split(tui.Filter.GetText(), ",")
+			tui.getFilteredAlerts(filter)
+		} else if tui.Filter.GetText() == "" && tui.SidebarList.GetCurrentItem() == 1 {
+			tui.getSilences()
+			return
+		} else if tui.Filter.GetText() != "" && tui.SidebarList.GetCurrentItem() == 1 {
+			tui.PreviewList.Clear()
+			filter := strings.Split(tui.Filter.GetText(), ",")
+			tui.getFilteredSilences(filter)
 		}
-		// if search field is not empty, return alerts based on search field
-		tui.PreviewList.Clear()
-		filter := strings.Split(tui.Filter.GetText(), ",")
-		tui.getFilteredAlerts(filter)
+
 		tui.App.SetFocus(tui.PreviewList)
 	}).SetPlaceholder("Custom matcher, e.g. env=\"production\"").SetPlaceholderTextColor(tcell.ColorIndigo)
 	tui.FooterText = tview.NewTextView().SetTextAlign(tview.AlignCenter).SetText(TitleFooterView).SetTextColor(tcell.ColorGray).SetWordWrap(true)
@@ -71,7 +80,7 @@ func InitTUI() *TUI {
 
 	// listen for keyboard events and if q pressed, exit if l pressed in SidebarList focus on PreviewList if h is pressed in PreviewList focus on SidebarList
 	tui.App.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Key() == tcell.KeyRune {
+		if event.Key() == tcell.KeyRune && tui.App.GetFocus() != tui.Filter {
 			switch event.Rune() {
 			case 'q':
 				tui.App.Stop()
@@ -104,6 +113,9 @@ func InitTUI() *TUI {
 			return nil
 		} else if event.Key() == tcell.KeyCtrlF {
 			tui.App.SetFocus(tui.Filter)
+			return nil
+		} else if event.Key() == tcell.KeyCtrlC {
+			tui.App.Stop()
 			return nil
 		}
 		return event
