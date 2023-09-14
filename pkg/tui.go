@@ -22,6 +22,7 @@ type TUI struct {
 	Config      Config
 }
 
+// InitTUI Initialize TUI
 func InitTUI() *TUI {
 	tui := TUI{App: tview.NewApplication()}
 
@@ -123,6 +124,7 @@ func InitTUI() *TUI {
 	return &tui
 }
 
+// Start starts TUI application
 func (tui *TUI) Start() error {
 	return tui.App.SetRoot(tui.Grid, true).Run()
 }

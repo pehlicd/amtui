@@ -19,13 +19,13 @@ func (tui *TUI) checkConn() error {
 	return nil
 }
 
-// Create a function to print errors
+// Errorf Create a function to print errors
 func (tui *TUI) Errorf(format string, args ...interface{}) {
 	tui.ClearPreviews()
 	tui.Preview.SetText(fmt.Sprintf("[red]"+format, args...)).SetTextAlign(tview.AlignLeft)
 }
 
-// Clear TUI previews
+// ClearPreviews Clear TUI previews
 func (tui *TUI) ClearPreviews() {
 	tui.PreviewList.Clear()
 	tui.Preview.Clear()
