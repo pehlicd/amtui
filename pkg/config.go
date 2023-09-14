@@ -70,7 +70,7 @@ func initConfig() Config {
 	}
 
 	// Scheme must be http or https
-	if *scheme != "https" && *scheme != "http" {
+	if *scheme != "https" && *scheme != "http" && *scheme != "" {
 		log.Fatalf("Error: scheme must be http or https. Got: %s\n", *scheme)
 	}
 
