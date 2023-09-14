@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -16,7 +17,7 @@ const (
 Options:
   --host                Alertmanager host
   -p, --port            Alertmanager port
-  -i, --insecure        For insecurely connecting to Alertmanager
+  -s, --scheme          Alertmanager scheme (http or https)
   -v, --version         Show version
   -h, --help            Help
 `
@@ -25,12 +26,11 @@ Options:
 var (
 	versionString, buildDate, buildCommit string
 	fl                                    = flag.NewFlagSet("amtui", flag.ExitOnError)
-	host                                  = fl.String("host", "localhost", "Alertmanager host")
-	port                                  = fl.StringP("port", "p", "9093", "Alertmanager port")
-	insecure                              = fl.BoolP("insecure", "i", true, "For insecurely connecting to Alertmanager")
+	host                                  = fl.String("host", "", "Alertmanager host")
+	port                                  = fl.StringP("port", "p", "", "Alertmanager port")
+	scheme                                = fl.StringP("scheme", "s", "", "Alertmanager scheme (http or https)")
 	help                                  = fl.BoolP("help", "h", false, "Show help")
 	version                               = fl.BoolP("version", "v", false, "Show version")
-	scheme                                = "http"
 )
 
 func printHelp(w io.Writer) {
@@ -43,10 +43,9 @@ func printHelp(w io.Writer) {
 }
 
 type Config struct {
-	Host     string `yaml:"host"`
-	Port     string `yaml:"port"`
-	Insecure bool   `yaml:"insecure"`
-	Scheme   string `yaml:"scheme"`
+	Host   string `yaml:"host"`
+	Port   string `yaml:"port"`
+	Scheme string `yaml:"scheme"`
 }
 
 func initConfig() Config {
@@ -59,37 +58,34 @@ func initConfig() Config {
 	viper.SetConfigType("yaml")            // Configuration file type
 	viper.AddConfigPath(os.Getenv("HOME")) // Search for the configuration file in the $HOME directory
 
-	if !*insecure {
-		scheme = "https"
-	}
-
-	config := Config{
-		Host:     *host,
-		Port:     *port,
-		Insecure: *insecure,
-		Scheme:   scheme,
-	}
-
+	// Print help and exit
 	if *help {
 		printHelp(os.Stderr)
 	}
 
+	// Print version and exit
 	if *version {
 		fmt.Printf("Version: %s\nBuild Date: %s\nBuild Commit: %s\n", versionString, buildDate, buildCommit)
 		os.Exit(0)
 	}
 
-	// Bind environment variables (optional)
-	viper.AutomaticEnv()
-	viper.SetEnvPrefix("AMTUI")
+	// Scheme must be http or https
+	if *scheme != "https" && *scheme != "http" {
+		log.Fatalf("Error: scheme must be http or https. Got: %s\n", *scheme)
+	}
 
-	//if flags are set, overwrite config file
+	config := Config{
+		Host:   *host,
+		Port:   *port,
+		Scheme: *scheme,
+	}
+
+	// if flags are set, overwrite config file
 	if config.Host != "" && config.Port != "" && config.Scheme != "" {
 		viper.Set("host", config.Host)
 		viper.Set("port", config.Port)
 		viper.Set("scheme", config.Scheme)
-		err := viper.WriteConfig()
-		if err != nil {
+		if err := viper.WriteConfig(); err != nil {
 			log.Fatalf("Error writing config file: %v", err)
 		}
 	}
@@ -97,14 +93,13 @@ func initConfig() Config {
 	// Read the configuration file
 	if err := viper.ReadInConfig(); err != nil {
 		// Handle errors when the configuration file is not found or is invalid
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+		var configFileNotFoundError viper.ConfigFileNotFoundError
+		if errors.As(err, &configFileNotFoundError) {
 			log.Println("Config file not found, using defaults.")
 			// Write the default configuration to a new file
 			if err := viper.SafeWriteConfig(); err != nil {
 				log.Fatalf("Error creating config file: %v", err)
 			}
-		} else {
-			log.Fatalf("Error reading config file: %v", err)
 		}
 	}
 
@@ -113,7 +108,7 @@ func initConfig() Config {
 		log.Fatalf("Error binding flags: %v", err)
 	}
 
-	// Unmarshal the configuration into your Config struct
+	// Unmarshal the configuration into Config struct
 	if err := viper.Unmarshal(&config); err != nil {
 		log.Fatalf("Error unmarshaling config: %v", err)
 	}
