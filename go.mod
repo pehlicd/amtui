@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/gdamore/tcell/v2 v2.6.0
 	github.com/go-openapi/swag v0.22.3
-	github.com/prometheus/alertmanager v0.25.0
+	github.com/prometheus/alertmanager v0.25.1
 	github.com/rivo/tview v0.0.0-20230814110005-ccc2c8119703
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.16.0
