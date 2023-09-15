@@ -14,53 +14,23 @@ import (
 
 // fetch silences data from alertmanager api
 func (tui *TUI) getSilences() {
-	err := tui.checkConn()
-	if err != nil {
-		tui.Errorf("%s", err)
-		return
-	}
-
 	params := silence.NewGetSilencesParams().WithTimeout(5 * time.Second).WithContext(context.Background())
-	silences, err := tui.amClient().Silence.GetSilences(params)
-	if err != nil {
-		tui.Errorf("Error fetching silences data: %s", err)
-		return
-	}
-
-	tui.ClearPreviews()
-
-	if len(silences.Payload) == 0 {
-		tui.Preview.SetText("No silenced alerts 🔔").SetTextAlign(tview.AlignCenter)
-		return
-	}
-
-	tui.PreviewList.SetTitle(" Silences ").SetTitleAlign(tview.AlignCenter)
-	tui.PreviewList.AddItem("Total silences 🔕: "+strconv.Itoa(len(silences.Payload)), "", 0, nil)
-
-	for _, silence := range silences.Payload {
-		silenceByte, err := json.MarshalIndent(silence, "", "    ")
-		if err != nil {
-			log.Printf("Error marshaling silence: %s", err)
-			continue
-		}
-		mainText := silence.EndsAt.String() + " - " + *silence.CreatedBy + " - " + *silence.Comment
-		tui.PreviewList.AddItem(mainText, fmt.Sprintf("[green]%s", string(silenceByte)), 0, nil)
-	}
-
-	tui.PreviewList.SetSelectedFunc(func(i int, s string, s2 string, r rune) {
-		tui.Preview.Clear()
-		tui.Preview.SetText(s2).SetTextAlign(tview.AlignLeft)
-	})
+	tui.silences(params)
 }
 
+// fetch filtered silences data from alertmanager api
 func (tui *TUI) getFilteredSilences(filter []string) {
+	params := silence.NewGetSilencesParams().WithTimeout(5 * time.Second).WithContext(context.Background()).WithFilter(filter)
+	tui.silences(params)
+}
+
+func (tui *TUI) silences(params *silence.GetSilencesParams) {
 	err := tui.checkConn()
 	if err != nil {
 		tui.Errorf("%s", err)
 		return
 	}
 
-	params := silence.NewGetSilencesParams().WithTimeout(5 * time.Second).WithContext(context.Background()).WithFilter(filter)
 	silences, err := tui.amClient().Silence.GetSilences(params)
 	if err != nil {
 		tui.Errorf("Error fetching silences data: %s", err)
@@ -77,13 +47,13 @@ func (tui *TUI) getFilteredSilences(filter []string) {
 	tui.PreviewList.SetTitle(" Silences ").SetTitleAlign(tview.AlignCenter)
 	tui.PreviewList.AddItem("Total silences 🔕: "+strconv.Itoa(len(silences.Payload)), "", 0, nil)
 
-	for _, silence := range silences.Payload {
-		silenceByte, err := json.MarshalIndent(silence, "", "    ")
+	for _, s := range silences.Payload {
+		silenceByte, err := json.MarshalIndent(s, "", "    ")
 		if err != nil {
 			log.Printf("Error marshaling silence: %s", err)
 			continue
 		}
-		mainText := silence.EndsAt.String() + " - " + *silence.CreatedBy + " - " + *silence.Comment
+		mainText := s.EndsAt.String() + " - " + *s.CreatedBy + " - " + *s.Comment
 		tui.PreviewList.AddItem(mainText, fmt.Sprintf("[green]%s", string(silenceByte)), 0, nil)
 	}
 
