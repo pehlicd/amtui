@@ -15,7 +15,7 @@ import (
 
 // fetch alerts data from alertmanager api
 func (tui *TUI) getAlerts() {
-	params := alert.NewGetAlertsParamsWithTimeout(10 * time.Second).WithContext(context.Background()).WithActive(swag.Bool(true)).WithSilenced(swag.Bool(false))
+	params := alert.NewGetAlertsParamsWithTimeout(5 * time.Second).WithContext(context.Background()).WithActive(swag.Bool(true)).WithSilenced(swag.Bool(false))
 	tui.alerts(params)
 }
 

@@ -18,7 +18,7 @@ func (tui *TUI) getStatus() {
 		return
 	}
 
-	params := general.NewGetStatusParams().WithTimeout(10 * time.Second).WithContext(context.Background())
+	params := general.NewGetStatusParams().WithTimeout(5 * time.Second).WithContext(context.Background())
 	status, err := tui.amClient().General.GetStatus(params)
 	if err != nil {
 		tui.Errorf("Error fetching status data: %s", err)
