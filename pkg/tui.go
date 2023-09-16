@@ -33,7 +33,7 @@ func InitTUI() *TUI {
 		// check if Alerts or Silences option is selected from SidebarList or not
 		if tui.SidebarList.GetCurrentItem() == 2 {
 			tui.ClearPreviews()
-			tui.Preview.SetText("[red]Please select Alerts or Silences option from Navigation").SetTextAlign(tview.AlignCenter)
+			tui.Preview.SetText("[red]Please select Alerts or Silences option from Navigation to use filter").SetTextAlign(tview.AlignCenter)
 			return
 		}
 
