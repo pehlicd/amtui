@@ -22,6 +22,7 @@ func (tui *TUI) getStatus() {
 	status, err := tui.amClient().General.GetStatus(params)
 	if err != nil {
 		tui.Errorf("Error fetching status data: %s", err)
+		return
 	}
 
 	tui.ClearPreviews()
