@@ -29,6 +29,8 @@ var (
 	host                                  = fl.String("host", "", "Alertmanager host")
 	port                                  = fl.StringP("port", "p", "", "Alertmanager port")
 	scheme                                = fl.StringP("scheme", "s", "", "Alertmanager scheme (http or https)")
+	username                              = fl.StringP("username", "", "", "Alertmanager username for basic auth")
+	password                              = fl.StringP("password", "", "", "Alertmanager password for basic auth")
 	help                                  = fl.BoolP("help", "h", false, "Show help")
 	version                               = fl.BoolP("version", "v", false, "Show version")
 )
@@ -46,6 +48,12 @@ type Config struct {
 	Host   string `yaml:"host"`
 	Port   string `yaml:"port"`
 	Scheme string `yaml:"scheme"`
+	Auth   Auth   `yaml:"auth"`
+}
+
+type Auth struct {
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
 }
 
 func initConfig() Config {
@@ -74,10 +82,23 @@ func initConfig() Config {
 		log.Fatalf("Error: scheme must be http or https. Got: %s\n", *scheme)
 	}
 
-	config := Config{
-		Host:   *host,
-		Port:   *port,
-		Scheme: *scheme,
+	var config Config
+	if *username == "" && *password == "" {
+		config = Config{
+			Host:   *host,
+			Port:   *port,
+			Scheme: *scheme,
+		}
+	} else {
+		config = Config{
+			Host:   *host,
+			Port:   *port,
+			Scheme: *scheme,
+			Auth: Auth{
+				Username: *username,
+				Password: *password,
+			},
+		}
 	}
 
 	// if flags are set, overwrite config file
@@ -85,6 +106,10 @@ func initConfig() Config {
 		viper.Set("host", config.Host)
 		viper.Set("port", config.Port)
 		viper.Set("scheme", config.Scheme)
+		if config.Auth.Username != "" {
+			viper.Set("auth.username", config.Auth.Username)
+			viper.Set("auth.password", config.Auth.Password)
+		}
 		if err := viper.WriteConfig(); err != nil {
 			log.Fatalf("Error writing config file: %v", err)
 		}
