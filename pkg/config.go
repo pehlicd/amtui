@@ -18,6 +18,8 @@ Options:
   --host                Alertmanager host
   -p, --port            Alertmanager port
   -s, --scheme          Alertmanager scheme (http or https)
+  --username            Alertmanager username for basic auth
+  --password            Alertmanager password for basic auth
   -v, --version         Show version
   -h, --help            Help
 `

@@ -26,12 +26,6 @@ func (tui *TUI) getFilteredAlerts(filter []string) {
 }
 
 func (tui *TUI) alerts(params *alert.GetAlertsParams) {
-	err := tui.checkConn()
-	if err != nil {
-		tui.Errorf("%s", err)
-		return
-	}
-
 	alerts, err := tui.amClient().Alert.GetAlerts(params)
 	if err != nil {
 		tui.Errorf("Error fetching alerts data: %s", err)

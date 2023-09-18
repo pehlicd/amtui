@@ -12,12 +12,6 @@ import (
 
 // fetch status data from alertmanager api
 func (tui *TUI) getStatus() {
-	err := tui.checkConn()
-	if err != nil {
-		tui.Errorf("%s", err)
-		return
-	}
-
 	params := general.NewGetStatusParams().WithTimeout(5 * time.Second).WithContext(context.Background())
 	status, err := tui.amClient().General.GetStatus(params)
 	if err != nil {

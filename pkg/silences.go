@@ -25,12 +25,6 @@ func (tui *TUI) getFilteredSilences(filter []string) {
 }
 
 func (tui *TUI) silences(params *silence.GetSilencesParams) {
-	err := tui.checkConn()
-	if err != nil {
-		tui.Errorf("%s", err)
-		return
-	}
-
 	silences, err := tui.amClient().Silence.GetSilences(params)
 	if err != nil {
 		tui.Errorf("Error fetching silences data: %s", err)

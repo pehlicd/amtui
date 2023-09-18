@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"log"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -78,6 +79,12 @@ func InitTUI() *TUI {
 
 	// configuration management
 	tui.Config = initConfig()
+
+	// check if alertmanager host is up or not
+	err := tui.checkConn()
+	if err != nil {
+		log.Panicf("Error connecting to alertmanager %s\n", err)
+	}
 
 	// listen for keyboard events and if q pressed, exit if l pressed in SidebarList focus on PreviewList if h is pressed in PreviewList focus on SidebarList
 	tui.App.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {

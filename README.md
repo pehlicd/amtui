@@ -101,6 +101,12 @@ You can also specify connection details using command-line flags:
 amtui --host 127.0.0.1 --port 9093 --scheme http
 ```
 
+AMTUI also supports basic authentication. You can specify the username and password using the `--username` and `--password` flags:
+
+```bash
+amtui --host 127.0.0.1 --port 9093 --scheme http --username admin --password admin
+```
+
 ## Dependencies
 
 AMTUI uses the following dependencies:
