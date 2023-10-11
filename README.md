@@ -125,6 +125,10 @@ If you'd like to contribute to AMTUI, feel free to submit pull requests or open 
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/pehlicd/amtui.svg)](https://starchart.cc/pehlicd/amtui)
+
 ---
 
 Developed by [Furkan Pehlivan](https://github.com/pehlicd) - [Project Repository](https://github.com/pehlicd/amtui)
