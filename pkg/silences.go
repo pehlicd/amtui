@@ -12,13 +12,13 @@ import (
 	"github.com/rivo/tview"
 )
 
-// fetch silences data from alertmanager api
+// getSilences fetches silences data from alertmanager api
 func (tui *TUI) getSilences() {
 	params := silence.NewGetSilencesParams().WithTimeout(5 * time.Second).WithContext(context.Background())
 	tui.silences(params)
 }
 
-// fetch filtered silences data from alertmanager api
+// getFilteredSilences fetches filtered silences data from alertmanager api
 func (tui *TUI) getFilteredSilences(filter []string) {
 	params := silence.NewGetSilencesParams().WithTimeout(5 * time.Second).WithContext(context.Background()).WithFilter(filter)
 	tui.silences(params)
