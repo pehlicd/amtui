@@ -10,7 +10,7 @@ import (
 	"github.com/rivo/tview"
 )
 
-// fetch status data from alertmanager api
+// getStatus fetches status data from alertmanager api
 func (tui *TUI) getStatus() {
 	params := general.NewGetStatusParams().WithTimeout(5 * time.Second).WithContext(context.Background())
 	status, err := tui.amClient().General.GetStatus(params)

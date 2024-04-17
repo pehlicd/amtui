@@ -13,13 +13,13 @@ import (
 	"github.com/rivo/tview"
 )
 
-// fetch alerts data from alertmanager api
+// getAlerts fetches alerts data from Alertmanager api
 func (tui *TUI) getAlerts() {
 	params := alert.NewGetAlertsParamsWithTimeout(5 * time.Second).WithContext(context.Background()).WithActive(swag.Bool(true)).WithSilenced(swag.Bool(false))
 	tui.alerts(params)
 }
 
-// fetch filtered alerts data from alertmanager api
+// getFilteredAlerts fetch filtered alerts data from Alertmanager api
 func (tui *TUI) getFilteredAlerts(filter []string) {
 	params := alert.NewGetAlertsParamsWithTimeout(5 * time.Second).WithContext(context.Background()).WithFilter(filter).WithActive(swag.Bool(true)).WithSilenced(swag.Bool(false))
 	tui.alerts(params)

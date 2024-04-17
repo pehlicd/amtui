@@ -1,9 +1,10 @@
 module github.com/pehlicd/amtui
 
-go 1.20
+go 1.22.2
 
 require (
 	github.com/gdamore/tcell/v2 v2.6.0
+	github.com/go-openapi/runtime v0.25.0
 	github.com/go-openapi/swag v0.22.3
 	github.com/prometheus/alertmanager v0.25.1
 	github.com/rivo/tview v0.0.0-20230814110005-ccc2c8119703
@@ -24,7 +25,6 @@ require (
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
 	github.com/go-openapi/loads v0.21.2 // indirect
-	github.com/go-openapi/runtime v0.25.0 // indirect
 	github.com/go-openapi/spec v0.20.7 // indirect
 	github.com/go-openapi/strfmt v0.21.3 // indirect
 	github.com/go-openapi/validate v0.22.0 // indirect

@@ -8,7 +8,7 @@ import (
 	"github.com/rivo/tview"
 )
 
-// dial tcp connection to alertmanager to be ensure if alertmanager server is up or not
+// checkConn dial tcp connection to alertmanager to be ensured if alertmanager server is up or not
 func (tui *TUI) checkConn() error {
 	conn, err := net.DialTimeout("tcp", tui.Config.Host+":"+tui.Config.Port, 1000*time.Millisecond)
 	if err != nil {

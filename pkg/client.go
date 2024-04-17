@@ -9,7 +9,7 @@ const (
 	BasePath = "/api/v2"
 )
 
-// create alertmanager client
+// amClient creates Alertmanager client
 func (tui *TUI) amClient() *am.AlertmanagerAPI {
 	address := tui.Config.Host + ":" + tui.Config.Port
 	scheme := []string{tui.Config.Scheme}
