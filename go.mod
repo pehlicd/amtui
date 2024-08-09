@@ -1,6 +1,6 @@
 module github.com/pehlicd/amtui
 
-go 1.22.2
+go 1.22.6
 
 require (
 	github.com/gdamore/tcell/v2 v2.6.0
